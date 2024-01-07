@@ -24,8 +24,8 @@ def z(theta):
     return cmath.exp(theta * 1j) + cmath.exp(math.pi * theta * 1j)
 
 # Fixed line lengths
-length_line1 = 200
-length_line2 = 300
+length_line1 = 300
+length_line2 = 200
 
 # Initial angles for the lines (radians)
 angle_line1 = 0
@@ -36,7 +36,7 @@ theta = 0
 
 # Trail for the second line
 trail_points = []
-max_trail_length = 300
+max_trail_length = 300000
 
 # Main loop
 running = True
@@ -48,14 +48,14 @@ while running:
 
     # Compute the complex rotation speeds
     complex_speed = z(theta)
-    rotation_speed_1 = complex_speed.real * 0.15
-    rotation_speed_2 = complex_speed.imag * 0.15
+    rotation_speed_1 = complex_speed.real * 0.03
+    rotation_speed_2 = complex_speed.imag * 0.03
 
     # Calculate the new angles for the lines, ensuring they're within the range [0, 2*pi)
     angle_line1 = (angle_line1 + rotation_speed_1) % (2 * math.pi)
     angle_line2 = (angle_line2 + rotation_speed_2) % (2 * math.pi)
     # Update theta for the next frame
-    theta += 0.001
+    theta += 0.04
 
     # Calculate the new angles for the lines
     angle_line1 = (angle_line1 + rotation_speed_1) % (2*math.pi)
@@ -88,7 +88,7 @@ while running:
     pygame.display.flip()
 
     # Cap the frame rate
-    pygame.time.Clock().tick(60)
+    pygame.time.Clock().tick(1000)
 
 # Quit Pygame
 pygame.quit()
