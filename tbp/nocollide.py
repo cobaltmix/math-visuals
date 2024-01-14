@@ -19,24 +19,22 @@ colors = [RED, GREEN, BLUE]
 
 # Constants
 G = 1.4  # Gravitational constant in our simulation
-dt = 0.05  # Time step for the integrator
-MASS_SCALE = 3  # Scale factor for drawing the stars
+dt = 0.01  # Time step for the integrator
+MASS_SCALE = 300000  # Scale factor for drawing the stars
 
 # Initial conditions
-masses = np.array([4e3, 5e3, 5.385e3])  # Mass of the stars in tons
+masses = np.array([10e9, 150])  # Mass of the stars in tons
 positions = np.array(
-    [[WIDTH//2 - 500, HEIGHT//2], [WIDTH//2 + 500, HEIGHT//2], [WIDTH//2 - 300, HEIGHT//2]], dtype=float
+    [ [WIDTH//2 , HEIGHT//2], [WIDTH//2 + 300, HEIGHT//2]], dtype=float
 )  # Initial positions
 velocities = np.zeros_like(positions)  # Initial velocities - will update two values below.
 
 # Set initial upward velocities for smaller stars
 # The exact values require tuning based on the simulation parameters for a stable orbit.
-velocities[0, 1] = 10.0  # Star 0 velocity in y-direction
-velocities[1, 1] = -10.0  # Star 1 velocity in y-direction
-velocities[0, 0] = 10.0  # Star 0 velocity in x-direction
-velocities[1, 0] = -10.0  # Star 1 velocity in x-direction
-velocities[2, 0] = 10.0  # Star 0 velocity in x-direction
-velocities[2, 0] = -10.0
+velocities[0, 1] = 0  # Star 0 velocity in y-direction
+velocities[1, 1] = 0  # Star 1 velocity in y-direction
+velocities[0, 0] = 0  # Star 0 velocity in x-direction
+velocities[1, 0] = 0  # Star 1 velocity in x-direction
 trail_points = [[] for _ in positions]  # List to store the trail points for each circle
 
 

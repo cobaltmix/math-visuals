@@ -10,9 +10,9 @@ OFFSET_X, OFFSET_Y = WIDTH // 2, HEIGHT // 2  # Where to draw the first pendulum
 # Physics constants from the first file
 LENGTH1 = 2  # Length of the first pendulum rod in meters
 LENGTH2 = 2  # Length of the second pendulum rod in meters
-MASS1 = 2    # Mass of the first pendulum bob in kilograms
-MASS2 = 2   # Mass of the second pendulum bob in kilograms
-GRAVITY = -150  # Gravitational acceleration in m/s^2
+MASS1 = 0.02    # Mass of the first pendulum bob in kilograms
+MASS2 = 0.02   # Mass of the second pendulum bob in kilograms
+GRAVITY = -200  # Gravitational acceleration in m/s^2
 SCALE = 100  # Pixels per meter for drawing scale
 
 # Initialize Pygame
@@ -76,17 +76,24 @@ class DoublePendulum:
         delta_theta = theta2 - theta1
         den1 = (m1 + m2) * l1 - m2 * l1 * cos(delta_theta) ** 2
 
-        omega1_deriv = (m2 * l1 * omega1 ** 2 * sin(delta_theta) * cos(delta_theta) +
+        try:
+            omega1_deriv = (m2 * l1 * omega1 ** 2 * sin(delta_theta) * cos(delta_theta) +
                         m2 * GRAVITY * sin(theta2) * cos(delta_theta) +
                         m2 * l2 * omega2 ** 2 * sin(delta_theta) -
                         (m1 + m2) * GRAVITY * sin(theta1)) / den1
+        except OverflowError as exc:
+            print("Overflow:", exc)
 
         den2 = (l2 / l1) * den1
 
-        omega2_deriv = (-m2 * l2 * omega2 ** 2 * sin(delta_theta) * cos(delta_theta) +
-                        (m1 + m2) * GRAVITY * sin(theta1) * cos(delta_theta) -
-                        (m1 + m2) * l1 * omega1 ** 2 * sin(delta_theta) -
-                        (m1 + m2) * GRAVITY * sin(theta2)) / den2
+        try:
+            omega2_deriv = (-m2 * l2 * omega2 ** 2 * sin(delta_theta) * cos(delta_theta) +
+                            (m1 + m2) * GRAVITY * sin(theta1) * cos(delta_theta) -
+                            (m1 + m2) * l1 * omega1 ** 2 * sin(delta_theta) -
+                            (m1 + m2) * GRAVITY * sin(theta2)) / den2
+        except OverflowError as exc:
+            print("Overflow:", exc)
+
 
         # Update velocities and positions
         omega1 += omega1_deriv * dt
@@ -105,13 +112,13 @@ class DoublePendulum:
 # Create 200 Double Pendulum objects with initial conditions from the second file
 
 pendulums = []
-offset_increment = 0.000000001  # Radians to offset each pendulum by
-for i in range(6000):
+offset_increment = 0.000000000001  # Radians to offset each pendulum by
+for i in range(10000):
     theta_1 = 1.5 + (i * offset_increment)  # Apply offset to base angle theta_1
     theta_2 = 1.5 + (i * offset_increment)  # Apply offset to base angle theta_2
     link1 = Link(mass=MASS1, length=LENGTH1, theta_0=theta_1, omega_0=0)
     link2 = Link(mass=MASS2, length=LENGTH2, theta_0=theta_2, omega_0=0)
-    pendulums.append(DoublePendulum(link1, link2, interpolate_color(i / 6000)))
+    pendulums.append(DoublePendulum(link1, link2, interpolate_color(i / 10000)))
 
 # Main game loop
 while running:
@@ -137,7 +144,7 @@ while running:
         pendulum.draw(screen)  # Draw each pendulum
     pygame.display.flip()  # Update display
 
-    clock.tick(120)  # Run at 60 frames per second
+    clock.tick(999999)  # Run at 60 frames per second
 
 # Exit Pygame
 pygame.quit()

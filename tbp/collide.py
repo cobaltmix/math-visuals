@@ -104,25 +104,23 @@ note_cooldown = 200  # Cooldown between notes in milliseconds
 
 
 # Constants
-G = 1  # Gravitational constant in our simulation
-dt = 0.01  # sTime step for the integrator
-MASS_SCALE = 5  # Scale factor for drawing the stars
+G = 5e-12  # Gravitational constant in our simulation
+dt = 0.0000000005  # sTime step for the integrator
+MASS_SCALE = 300000000000000000000000000  # Scale factor for drawing the stars
 
 # Initial conditions
-masses = np.array([9e3, 8e3, 7e3])  # Mass of the stars in tons
+masses = np.array([1.98e30, 6e24])  # Mass of the stars in tons
 positions = np.array(
-    [[200,600], [900,900], [1800, 600]], dtype=float
+    [ [WIDTH//2 , HEIGHT//2], [WIDTH//2 + 300, HEIGHT//2]], dtype=float
 )  # Initial positions
 velocities = np.zeros_like(positions)  # Initial velocities - will update two values below.
 
 # Set initial upward velocities for smaller stars
 # The exact values require tuning based on the simulation parameters for a stable orbit.
 velocities[0, 1] = 0  # Star 0 velocity in y-direction
-velocities[1, 1] = 0  # Star 1 velocity in y-direction
+velocities[1, 1] = 2e10  # Star 1 velocity in y-direction
 velocities[0, 0] = 0  # Star 0 velocity in x-direction
-velocities[1, 0] = 0  # Star 1 velocity in x-direction
-velocities[0, 0] = 0  # Star 2 velocity in x-direction
-velocities[1, 0] = 0
+velocities[1, 0] = 2e8  # Star 1 velocity in x-direction
 trail_points = [[] for _ in positions]  # List to store the trail points for each circle
 
 def check_collision_and_update_masses(masses, positions, velocities, current_note, last_note_time):

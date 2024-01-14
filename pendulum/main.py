@@ -31,9 +31,6 @@ def derivatives(state):
 
     # Regularize the sine value to avoid division by a value too close to zero
     sin_delta = sin(delta_theta)
-    if abs(sin_delta) < 1e-9:
-        sin_delta = 1e-9 * np.sign(sin_delta)
-
     den1 = (2 * MASS1 + MASS2) - MASS2 * cos(2 * delta_theta)
     den2 = LENGTH1 * den1 - LENGTH2 * MASS2 * cos(delta_theta)
 
