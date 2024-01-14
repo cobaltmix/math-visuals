@@ -1,10 +1,12 @@
 import pygame
 import math
 import random
+from pygame.locals import *
 
 # Initialize pygame
 pygame.init()
 TRAIL_COLOR = (255, 255, 255)
+paused = False
 # Constants
 WIDTH, HEIGHT = 2000, 1200  # Screen dimensions
 DARK_GREY = (50, 50, 50)  # Background color
@@ -136,6 +138,7 @@ dwarf_planet_data = {
         "angle": 0,
         "color": DWARF_PLANET_COLORS["Pluto"],
         "orbital_speed": 0.00009 * speed_multiplier,
+        "distance": 5,
     },
     "Eris": {
         "radius": 1,
@@ -144,6 +147,7 @@ dwarf_planet_data = {
         "angle": 0,
         "color": DWARF_PLANET_COLORS["Eris"],
         "orbital_speed": 0.00008 * speed_multiplier,
+        "distance": 5,
     },
     "Haumea": {
         "radius": 1,
@@ -152,6 +156,7 @@ dwarf_planet_data = {
         "angle": 0,
         "color": DWARF_PLANET_COLORS["Haumea"],
         "orbital_speed": 0.00007 * speed_multiplier,
+        "distance": 5,
     },
     "Makemake": {
         "radius": 1,
@@ -160,13 +165,33 @@ dwarf_planet_data = {
         "angle": 0,
         "color": DWARF_PLANET_COLORS["Makemake"],
         "orbital_speed": 0.00006 * speed_multiplier,
+        "distance": 5,
     },
 }
 solar_system_data.update(dwarf_planet_data)
 
+hovered = False
+
+
+# Information about the planets
+planet_info = {
+    "Sun": "The Sun is the only star in our solar system and has a diameter of 1,392,684 km and mass of 1.989 x 10^30 kg.",
+    "Mercury": "Mercury is the smallest planet with a diameter of 4,879 km and mass of 3.3 x 10^23 kg.",
+    "Venus": "Venus has a very hot atmosphere and has a diameter of 12,104 km and mass of 4.87 x 10^24 kg.",
+    "Earth": "Earth is our home planet with a diameter of 12,756 km and mass of 5.97 x 10^24 kg.",
+    "Mars": "Mars is known as the red planet and has a diameter of 6,792 km and mass of 6.39 x 10^23 kg.",
+    "Jupiter": "Jupiter is the largest planet with a diameter of 142,984 km and mass of 1.9 x 10^27 kg.",
+    "Saturn": "Saturn has prominent rings and has a diameter of 120,536 km and mass of 5.68 x 10^26 kg.",
+    "Uranus": "Uranus has a blue-green color and has a diameter of 51,118 km and mass of 8.68 x 10^25 kg.",
+    "Neptune": "Neptune is the farthest known planet with a diameter of 49,528 km and mass of 1.02 x 10^26 kg.",
+    "Pluto": "Pluto was reclassified as a dwarf planet in 2006 and has a diameter of 2,377 km and mass of 1.3 x 10^22 kg.",
+    "Eris": "Eris is the largest known dwarf planet with a diameter of 2,326 km and mass of 1.66 x 10^22 kg.",
+    "Haumea": "Haumea is a football-shaped dwarf planet with diameters of 1,150 km x 1,574 km and mass of 4 x 10^21 kg.",
+    "Makemake": "Makemake is a red-colored dwarf planet with a diameter of 1,430 km and mass of 3 x 10^21 kg.",
+}
 
 # Constants for the asteroid belt
-ASTEROID_COUNT = 2000  # The number of simulated asteroids - adjust as necessary
+ASTEROID_COUNT = 1000  # The number of simulated asteroids - adjust as necessary
 INNER_BELT_RADIUS = 115 * distance_multiplier  # Inner radius of the asteroid belt
 OUTER_BELT_RADIUS = 180 * distance_multiplier  # Outer radius of the asteroid belt
 ASTEROID_COLOR = (169, 169, 169)  # Grey color for asteroids
@@ -196,7 +221,7 @@ KUIPER_BELT_INNER_RADIUS = (
     30 * 75
 )  # Inner radius of the Kuiper Belt in our simulation scale
 KUIPER_BELT_OUTER_RADIUS = (
-    30 * 75 + 25 * 75
+    50 * 75
 )  # Outer radius of the Kuiper Belt in our simulation scale
 KUIPER_BELT_COLOR = (
     0,
@@ -337,38 +362,113 @@ def draw_asteroid_belt(
             )
 
 
+# Kuiper belt objects
+KUIPER_OBJECT_COUNT = 5000  # Number of objects (comets/asteroids) in the Kuiper Belt
+KUIPER_OBJECT_COLOR = (255, 255, 255)  # White color for comets/asteroids
+
+# Generate random positions for the simulated asteroids and comets in the Kuiper Belt
+kuiper_objects_data = [
+    {
+        "radius": random.uniform(3, 5),  # Random size for visual variety
+        "distance": random.uniform(KUIPER_BELT_INNER_RADIUS, KUIPER_BELT_OUTER_RADIUS),
+        "angle": random.uniform(0, 2 * math.pi),
+        "orbital_speed": random.uniform(0.0002, 0.0004) * speed_multiplier,
+        "color": KUIPER_OBJECT_COLOR
+        if random.random() > 0.5
+        else (0, 0, 255),  # Half will be blue for comets
+    }
+    for _ in range(KUIPER_OBJECT_COUNT)
+]
+
+
 def draw_kuiper_belt(screen, pan_offset_x, pan_offset_y, zoom):
     kuiper_belt_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
 
-    # Generate points for the inner and outer edges of the Kuiper Belt
-    kuiper_inner_edge_points = []
-    kuiper_outer_edge_points = []
-    for angle in range(0, 361):  # Go up to 361 for a slight overlap
-        rad_angle = math.radians(angle)
-        inner_x = pan_offset_x + int(
-            math.cos(rad_angle) * KUIPER_BELT_INNER_RADIUS * zoom
-        )
-        inner_y = pan_offset_y + int(
-            math.sin(rad_angle) * KUIPER_BELT_INNER_RADIUS * zoom
-        )
-        kuiper_inner_edge_points.append((inner_x, inner_y))
-
-        outer_x = pan_offset_x + int(
-            math.cos(rad_angle) * KUIPER_BELT_OUTER_RADIUS * zoom
-        )
-        outer_y = pan_offset_y + int(
-            math.sin(rad_angle) * KUIPER_BELT_OUTER_RADIUS * zoom
-        )
-        kuiper_outer_edge_points.append((outer_x, outer_y))
-
-    # Combine the edge points and draw the polygon for the belt
-    all_points = kuiper_inner_edge_points + kuiper_outer_edge_points[::-1]
-    pygame.draw.polygon(kuiper_belt_surface, KUIPER_BELT_COLOR, all_points)
+    # Fill the region between the inner and outer radius with a green tint
+    pygame.draw.circle(
+        kuiper_belt_surface,
+        KUIPER_BELT_COLOR,
+        (int(pan_offset_x), int(pan_offset_y)),
+        int(KUIPER_BELT_OUTER_RADIUS * zoom),
+    )
+    pygame.draw.circle(
+        kuiper_belt_surface,
+        DARK_GREY + (0,),  # Same as background color to 'erase' inner circle
+        (int(pan_offset_x), int(pan_offset_y)),
+        int(KUIPER_BELT_INNER_RADIUS * zoom),
+    )
 
     # Blit this Surface onto the main screen Surface
     screen.blit(kuiper_belt_surface, (0, 0))
 
+    # Draw the icy objects in the Kuiper Belt
+    for obj in kuiper_objects_data:
+        obj_x = obj["distance"] * math.cos(obj["angle"])
+        obj_y = obj["distance"] * math.sin(obj["angle"])
+        screen_x = obj_x * zoom + pan_offset_x
+        screen_y = obj_y * zoom + pan_offset_y
+        pygame.draw.circle(
+            screen,
+            KUIPER_OBJECT_COLOR,
+            (int(screen_x), int(screen_y)),
+            int(obj["radius"] * zoom),
+        )
 
+    # Update the positions of objects for their orbit
+    for obj in kuiper_objects_data:
+        obj["angle"] += obj["orbital_speed"]
+
+
+# Constants for the termination shock
+TERMINATION_SHOCK_INNER_RADIUS = (
+    113 * 75 * distance_multiplier
+)  # Inner radius of the termination shock in our simulation scale
+TERMINATION_SHOCK_OUTER_RADIUS = (
+    122 * 75 * distance_multiplier
+)  # Outer radius of the termination shock in our simulation scale
+TERMINATION_SHOCK_COLOR = (255, 165, 0, 64)  # Semi-transparent orange color
+
+
+def draw_termination_shock(screen, pan_offset_x, pan_offset_y, zoom):
+    termination_shock_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    pygame.draw.circle(
+        termination_shock_surface,
+        TERMINATION_SHOCK_COLOR,
+        (int(pan_offset_x), int(pan_offset_y)),
+        int(TERMINATION_SHOCK_OUTER_RADIUS * zoom),
+    )
+    pygame.draw.circle(
+        termination_shock_surface,
+        DARK_GREY + (0,),
+        (int(pan_offset_x), int(pan_offset_y)),
+        int(TERMINATION_SHOCK_INNER_RADIUS * zoom),
+    )
+    screen.blit(termination_shock_surface, (0, 0))
+
+
+font = pygame.font.Font(None, 24)  # Initialize a font for text rendering
+
+
+def draw_info_box(screen, text, planet_pos, mouse_pos):
+    # Initialize a font for text rendering
+    font = pygame.font.Font(None, 24)
+    # Create a text surface
+    text_surface = font.render(text, True, (0, 0, 0))
+    # Calculate the width and height of the text surface and add some padding
+    text_width, text_height = text_surface.get_size()
+    box_width, box_height = text_width + 20, text_height + 20
+    # Calculate the position of the box
+    box_x = mouse_pos[0] + 20  # Box starts 20 pixels to the right of the cursor
+    box_y = mouse_pos[1]  # Box is aligned with the cursor vertically
+    # Draw a line from the planet to the box
+    pygame.draw.line(screen, (255, 255, 255), planet_pos, mouse_pos, 1)
+    # Draw a white rectangle for the box background
+    pygame.draw.rect(screen, (255, 255, 255), (box_x, box_y, box_width, box_height))
+    # Blit the text surface onto the screen at the box position offset by 10 pixels from each border
+    screen.blit(text_surface, (box_x + 10, box_y + 10))
+
+
+info_box_visible = False
 # Main loop
 running = True
 while running:
@@ -394,52 +494,126 @@ while running:
                 zoom *= 1.1
             elif event.y == -1:  # Scroll down
                 zoom /= 1.1
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                paused = not paused  # Toggle the pause state
 
+    if not paused and not info_box_visible:
         # Clear the screen
-    screen.fill(DARK_GREY)
-    # Draw the asteroid belt
-    draw_asteroid_belt(
-        screen, pan_offset_x, pan_offset_y, zoom, INNER_BELT_RADIUS, OUTER_BELT_RADIUS
-    )
+        screen.fill(DARK_GREY)
+        # Draw the asteroid belt
+        draw_asteroid_belt(
+            screen,
+            pan_offset_x,
+            pan_offset_y,
+            zoom,
+            INNER_BELT_RADIUS,
+            OUTER_BELT_RADIUS,
+        )
 
-    # Draw the Kuiper Belt tint
-    draw_kuiper_belt(screen, pan_offset_x, pan_offset_y, zoom)
+        # Draw the Kuiper Belt tint
+        draw_kuiper_belt(screen, pan_offset_x, pan_offset_y, zoom)
 
-    for asteroid in asteroid_belt_data:
-        asteroid["angle"] += asteroid["orbital_speed"]
+        draw_termination_shock(screen, pan_offset_x, pan_offset_y, zoom)
 
-    # Update and draw each planet and their trails
+        for asteroid in asteroid_belt_data:
+            asteroid["angle"] += asteroid["orbital_speed"]
+
+        # Update and draw each planet and their trails
+        for name, planet_data in solar_system_data.items():
+            parent_name = planet_data.get("parent")
+            if parent_name:
+                parent_planet = solar_system_data[parent_name]
+                planet_data["angle"] += planet_data["orbital_speed"]
+                orbit_x = parent_planet["distance"] * math.cos(
+                    parent_planet["angle"]
+                ) + planet_data["distance"] * math.cos(planet_data["angle"])
+                orbit_y = parent_planet["distance"] * math.sin(
+                    parent_planet["angle"]
+                ) + planet_data["distance"] * math.sin(planet_data["angle"])
+                x = orbit_x * zoom + pan_offset_x
+                y = orbit_y * zoom + pan_offset_y
+                px, py = int(x), int(y)
+                pygame.draw.circle(
+                    screen,
+                    planet_data["color"],
+                    (px, py),
+                    int(planet_data["radius"] * zoom),
+                )
+            else:
+                planet_data["angle"] += planet_data["orbital_speed"]
+                draw_planet(planet_data, planet_trails[name])
+
+        # Draw rings for Saturn and Uranus with adjusted zoom
+        saturn_data = solar_system_data["Saturn"]
+        uranus_data = solar_system_data["Uranus"]
+        neptune_data = solar_system_data["Neptune"]
+        draw_rings(saturn_data, 1, saturn_data["radius"] + 6, saturn_data["radius"] + 9)
+        draw_rings(uranus_data, 1, uranus_data["radius"] + 5, uranus_data["radius"] + 7)
+        draw_rings(
+            neptune_data, 1, neptune_data["radius"] + 4, neptune_data["radius"] + 5
+        )
+
+    # Always check for hover to display info boxes
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    hovered = False
     for name, planet_data in solar_system_data.items():
-        parent_name = planet_data.get("parent")
-        if parent_name:
-            parent_planet = solar_system_data[parent_name]
-            planet_data["angle"] += planet_data["orbital_speed"]
-            orbit_x = parent_planet["distance"] * math.cos(
-                parent_planet["angle"]
-            ) + planet_data["distance"] * math.cos(planet_data["angle"])
-            orbit_y = parent_planet["distance"] * math.sin(
-                parent_planet["angle"]
-            ) + planet_data["distance"] * math.sin(planet_data["angle"])
-            x = orbit_x * zoom + pan_offset_x
-            y = orbit_y * zoom + pan_offset_y
-            px, py = int(x), int(y)
-            pygame.draw.circle(
-                screen,
-                planet_data["color"],
-                (px, py),
-                int(planet_data["radius"] * zoom),
-            )
-        else:
-            planet_data["angle"] += planet_data["orbital_speed"]
-            draw_planet(planet_data, planet_trails[name])
+        if (
+            "distance" in planet_data
+            and not "parent" in planet_data
+            or "radius" in dwarf_planet_data
+        ):  # Only consider actual planets that have 'distance' defined
+            if "parent" not in planet_data:  # Check for planets and dwarf planets
+                # Calculate positional data depending on the type of object
+                if (
+                    "semi_major_axis" in planet_data
+                    and "semi_minor_axis" in planet_data
+                ):
+                    # Dwarf planet with elliptical orbit
+                    planet_screen_x = (
+                        pan_offset_x
+                        + planet_data["semi_major_axis"]
+                        * math.cos(planet_data["angle"])
+                        * zoom
+                    )
+                    planet_screen_y = (
+                        pan_offset_y
+                        + planet_data["semi_minor_axis"]
+                        * math.sin(planet_data["angle"])
+                        * zoom
+                    )
+                else:
+                    # Regular planet with circular orbit
+                    planet_screen_x = (
+                        pan_offset_x
+                        + planet_data["distance"]
+                        * math.cos(planet_data["angle"])
+                        * zoom
+                    )
+                    planet_screen_y = (
+                        pan_offset_y
+                        + planet_data["distance"]
+                        * math.sin(planet_data["angle"])
+                        * zoom
+                    )
+                if (
+                    math.hypot(planet_screen_x - mouse_x, planet_screen_y - mouse_y)
+                    <= planet_data["radius"] * zoom
+                ):
+                    hovered = True
+                    if not info_box_visible:
+                        info_text = planet_info.get(name, "Information not available")
+                        draw_info_box(
+                            screen,
+                            info_text,
+                            (planet_screen_x, planet_screen_y),
+                            (mouse_x, mouse_y),
+                        )
+                        info_box_visible = True
+                    break
 
-    # Draw rings for Saturn and Uranus with adjusted zoom
-    saturn_data = solar_system_data["Saturn"]
-    uranus_data = solar_system_data["Uranus"]
-    neptune_data = solar_system_data["Neptune"]
-    draw_rings(saturn_data, 1, saturn_data["radius"] + 6, saturn_data["radius"] + 9)
-    draw_rings(uranus_data, 1, uranus_data["radius"] + 5, uranus_data["radius"] + 7)
-    draw_rings(neptune_data, 1, neptune_data["radius"] + 4, neptune_data["radius"] + 5)
+    if not hovered and info_box_visible:
+        info_box_visible = False  # Reset the flag when not hovering
 
     # Refresh the screen
     pygame.display.flip()
