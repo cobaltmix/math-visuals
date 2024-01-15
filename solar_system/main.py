@@ -267,7 +267,7 @@ solar_system_data.update(generate_moon_data("Jupiter", 95))
 # Trails for the planets
 planet_trails = {name: [] for name in solar_system_data.keys()}
 # Initial zoom and pan data
-zoom = 1.0
+zoom = 4.0
 pan_offset_x, pan_offset_y = WIDTH / 2, HEIGHT / 2
 panning = False
 trail_length = 2000
