@@ -21,7 +21,7 @@ def calculate_end_point(start_x, start_y, angle, length):
 
 # Function to compute the complex rotation speeds based on the function z(theta)
 def z(theta):
-    return cmath.exp(theta * 1j) + cmath.exp(math.pi * theta * 1j)
+    return cmath.exp(math.cos(theta) *2j) + cmath.exp(math.pi ** math.sin(theta) * 2j)
 
 # Fixed line lengths
 length_line1 = 300
@@ -48,14 +48,14 @@ while running:
 
     # Compute the complex rotation speeds
     complex_speed = z(theta)
-    rotation_speed_1 = complex_speed.real * 0.03
+    rotation_speed_1 = complex_speed.real * 0.02
     rotation_speed_2 = complex_speed.imag * 0.03
 
     # Calculate the new angles for the lines, ensuring they're within the range [0, 2*pi)
     angle_line1 = (angle_line1 + rotation_speed_1) % (2 * math.pi)
     angle_line2 = (angle_line2 + rotation_speed_2) % (2 * math.pi)
     # Update theta for the next frame
-    theta += 0.04
+    theta += 0.01
 
     # Calculate the new angles for the lines
     angle_line1 = (angle_line1 + rotation_speed_1) % (2*math.pi)

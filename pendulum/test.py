@@ -1,19 +1,27 @@
 import pygame
-from math import sin, cos, radians
+from math import sin, cos, pi
 import numpy as np
-import random
 
-# Constants for visualization from the first file
-WIDTH, HEIGHT = 2000, 1200           # Width and height of the window
-OFFSET_X, OFFSET_Y = WIDTH // 2, HEIGHT // 2  # Where to draw the first pendulum
+import matplotlib
 
-# Physics constants from the first file
-LENGTH1 = 2  # Length of the first pendulum rod in meters
-LENGTH2 = 2  # Length of the second pendulum rod in meters
-MASS1 = 0.02    # Mass of the first pendulum bob in kilograms
-MASS2 = 0.02   # Mass of the second pendulum bob in kilograms
-GRAVITY = -200  # Gravitational acceleration in m/s^2
-SCALE = 100  # Pixels per meter for drawing scale
+# Generate a colormap for smooth color transition
+from matplotlib.colors import LinearSegmentedColormap
+
+# Define your colors
+colors = [(255, 0, 0), (0, 0, 255), (255, 165, 0)]
+# Normalize the RGB values to the range [0, 1], as required by LinearSegmentedColormap
+colors = [(r/255.0, g/255.0, b/255.0) for r, g, b in colors]
+cmap = LinearSegmentedColormap.from_list('pendulum_cmap', colors, N=20000)
+
+# Constants for visualization
+WIDTH, HEIGHT = 2000, 1200
+OFFSET_X, OFFSET_Y = WIDTH // 2, HEIGHT // 2
+
+# Physics constants
+LENGTH1, LENGTH2 = 2, 2
+MASS1, MASS2 = 2, 2
+GRAVITY = -300
+SCALE = 100
 
 # Initialize Pygame
 pygame.init()
@@ -23,106 +31,66 @@ clock = pygame.time.Clock()
 running = True
 is_running_simulation = True
 
-# Colors from the first file with orange, pink, and purple added
-colors = [
-    (255, 0, 0),    # Red
-    (0, 0, 255),    # Blue
-    (255, 165, 0),  # Orange
-]
+# Colors
+colors = [(255, 0, 0), (0, 255, 255),(0, 255, 0), (0, 0, 255), (255, 165, 0)]
 
-def interpolate_color(t):
-    # Determine which colors to interpolate between based on t
-    num_colors = len(colors)
-    scaled_t = t * (num_colors - 1)
-    first_color_index = int(scaled_t)
-    second_color_index = min(first_color_index + 1, num_colors - 1)
-    local_t = scaled_t - first_color_index
+# Pre-calculate cos and sin for theta_1 and theta_2
+theta_1_radians = np.linspace(0.1, 0.1 + 0.000001 * 999, 1000)
+theta_2_radians = theta_1_radians.copy()  # They start the same
+cos_theta_1 = np.cos(theta_1_radians)
+sin_theta_1 = np.sin(theta_1_radians)
+cos_theta_2 = np.cos(theta_2_radians)
+sin_theta_2 = np.sin(theta_2_radians)
 
-    # Get the starting and ending color for this segment
-    color_start = colors[first_color_index]
-    color_end = colors[second_color_index]
+# Omega (angular velocity) initialization
+omega_1 = np.zeros(1000)
+omega_2 = np.zeros(1000)
 
-    # Interpolate between the two colors in this segment
-    return tuple(int(color_start[i] + (color_end[i] - color_start[i]) * local_t) for i in range(3))
+# Pre-calculate constant expressions and denominators
+m1_plus_m2 = MASS1 + MASS2
+l1_m2 = LENGTH1 * MASS2
+l2_m1_plus_m2_inv = LENGTH2 / (m1_plus_m2 * LENGTH1)
+gravity_sin_theta_2 = GRAVITY * sin_theta_2
+gravity_sin_theta_1 = GRAVITY * sin_theta_1
+l1_omega_1_sqrd = l1_m2 * omega_1 ** 2
+l2_omega_2_sqrd = LENGTH2 * omega_2 ** 2
+m2_g_sin_theta_2_cos_theta_1 = MASS2 * gravity_sin_theta_2 * cos_theta_1
+m1_plus_m2_g_sin_theta_1_cos_theta_2 = m1_plus_m2 * gravity_sin_theta_1 * cos_theta_2
+dt = 0.01
 
-# Link class from the second file
-class Link:
-    def __init__(self, mass, length, theta_0, omega_0):
-        self.mass = mass
-        self.length = length
-        self.theta = theta_0
-        self.omega = omega_0
+def calculate_double_pendulum(theta_1, theta_2, omega_1, omega_2, dt, LENGTH1, LENGTH2, MASS1, MASS2, GRAVITY):
+    # Constants
+    g_over_l1 = GRAVITY / LENGTH1
+    g_over_l2 = GRAVITY / LENGTH2
+    m1_plus_m2 = MASS1 + MASS2
 
-# DoublePendulum class from the second file
-class DoublePendulum:
-    def __init__(self, link1, link2, color):
-        self.link1 = link1
-        self.link2 = link2
-        self.color = color
+    # Intermediate calculations for angular accelerations
+    sin_1 = np.sin(theta_1)
+    sin_2 = np.sin(theta_2)
+    sin_12 = np.sin(theta_1 - theta_2)
+    cos_12 = np.cos(theta_1 - theta_2)
 
-    def get_positions(self):
-        x1 = self.link1.length * SCALE * sin(self.link1.theta) + OFFSET_X
-        y1 = -self.link1.length * SCALE * cos(self.link1.theta) + OFFSET_Y  # Notice the minus sign to invert y-axis
-        x2 = x1 + self.link2.length * SCALE * sin(self.link2.theta)
-        y2 = y1 - self.link2.length * SCALE * cos(self.link2.theta)         # Notice the minus sign to invert y-axis
+    # Equations of motion derived using Lagrangian mechanics
+    denom = (m1_plus_m2 - MASS2 * cos_12**2)
 
-        return (x1, y1), (x2, y2)
+    omega_1_deriv = (MASS2 * g_over_l1 * sin_2 * cos_12 - MASS2 * sin_12 * (LENGTH1 * omega_1**2 * cos_12 + LENGTH2 * omega_2**2) -
+                    m1_plus_m2 * g_over_l1 * sin_1) / (LENGTH1 * denom)
 
-    def update(self, dt):
-        l1, l2, m1, m2 = self.link1.length, self.link2.length, self.link1.mass, self.link2.mass
-        theta1, omega1, theta2, omega2 = self.link1.theta, self.link1.omega, self.link2.theta, self.link2.omega
+    omega_2_deriv = (m1_plus_m2 * (LENGTH1 * omega_1**2 * sin_12 - g_over_l2 * sin_2 + g_over_l2 * sin_1 * cos_12) +
+                    MASS2 * LENGTH2 * omega_2**2 * sin_12 * cos_12) / (LENGTH2 * denom)
 
-        # Equations of motion for a double pendulum
-        delta_theta = theta2 - theta1
-        den1 = (m1 + m2) * l1 - m2 * l1 * cos(delta_theta) ** 2
+    # Integrate angular accelerations to get velocities
+    omega_1 += omega_1_deriv * dt
+    omega_2 += omega_2_deriv * dt
 
-        try:
-            omega1_deriv = (m2 * l1 * omega1 ** 2 * sin(delta_theta) * cos(delta_theta) +
-                        m2 * GRAVITY * sin(theta2) * cos(delta_theta) +
-                        m2 * l2 * omega2 ** 2 * sin(delta_theta) -
-                        (m1 + m2) * GRAVITY * sin(theta1)) / den1
-        except OverflowError as exc:
-            print("Overflow:", exc)
+    # Integrate angular velocities to get angles
+    theta_1 += omega_1 * dt
+    theta_2 += omega_2 * dt
 
-        den2 = (l2 / l1) * den1
+    return theta_1, theta_2, omega_1, omega_2
 
-        try:
-            omega2_deriv = (-m2 * l2 * omega2 ** 2 * sin(delta_theta) * cos(delta_theta) +
-                            (m1 + m2) * GRAVITY * sin(theta1) * cos(delta_theta) -
-                            (m1 + m2) * l1 * omega1 ** 2 * sin(delta_theta) -
-                            (m1 + m2) * GRAVITY * sin(theta2)) / den2
-        except OverflowError as exc:
-            print("Overflow:", exc)
-
-
-        # Update velocities and positions
-        omega1 += omega1_deriv * dt
-        theta1 += omega1 * dt
-        omega2 += omega2_deriv * dt
-        theta2 += omega2 * dt
-
-        self.link1.theta, self.link1.omega, self.link2.theta, self.link2.omega = theta1, omega1, theta2, omega2
-
-    def draw(self, surface):
-        (x1, y1), (x2, y2) = self.get_positions()
-
-        # Draw the rods and pendulums
-        pygame.draw.line(surface, self.color, (OFFSET_X, OFFSET_Y), (x1, y1), 1)
-        pygame.draw.line(surface, self.color, (x1, y1), (x2, y2), 1)
-# Create 200 Double Pendulum objects with initial conditions from the second file
-
-pendulums = []
-offset_increment = 0.000000000001  # Radians to offset each pendulum by
-for i in range(10000):
-    theta_1 = 1.5 + (i * offset_increment)  # Apply offset to base angle theta_1
-    theta_2 = 1.5 + (i * offset_increment)  # Apply offset to base angle theta_2
-    link1 = Link(mass=MASS1, length=LENGTH1, theta_0=theta_1, omega_0=0)
-    link2 = Link(mass=MASS2, length=LENGTH2, theta_0=theta_2, omega_0=0)
-    pendulums.append(DoublePendulum(link1, link2, interpolate_color(i / 10000)))
-
-# Main game loop
+# Main loop
 while running:
-    # Event handling
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -132,19 +100,47 @@ while running:
             elif event.key == pygame.K_SPACE:
                 is_running_simulation = not is_running_simulation
 
-    # Simulation update
     if is_running_simulation:
-        dt = 0.01
-        for pendulum in pendulums:
-            pendulum.update(dt)  # Update each pendulum
 
-    # Drawing
-    screen.fill((0,0,0))
-    for pendulum in pendulums:
-        pendulum.draw(screen)  # Draw each pendulum
-    pygame.display.flip()  # Update display
+        if is_running_simulation:
+            theta_1_radians, theta_2_radians, omega_1, omega_2 = calculate_double_pendulum(
+                theta_1_radians, theta_2_radians, omega_1, omega_2, dt, LENGTH1, LENGTH2, MASS1, MASS2, GRAVITY)
+        # Update omega and theta values
+        delta_theta = theta_2_radians - theta_1_radians
+        cos_delta_theta = np.cos(delta_theta)
+        sin_delta_theta = np.sin(delta_theta)
 
-    clock.tick(999999)  # Run at 60 frames per second
+        den1 = (m1_plus_m2 * LENGTH1) - (MASS2 * LENGTH1 * cos_delta_theta ** 2)
 
-# Exit Pygame
+        # Calculate omega derivatives
+        omega_1_deriv = (l1_omega_1_sqrd * sin_delta_theta * cos_delta_theta +
+                         m2_g_sin_theta_2_cos_theta_1 +
+                         l2_omega_2_sqrd * sin_delta_theta -
+                         m1_plus_m2 * gravity_sin_theta_1) / den1
+
+        den2 = (LENGTH2 / LENGTH1) * den1
+        omega_2_deriv = (-l2_omega_2_sqrd * sin_delta_theta * cos_delta_theta +  # Corrected line
+                         m1_plus_m2_g_sin_theta_1_cos_theta_2 -
+                         m1_plus_m2 * l1_omega_1_sqrd * sin_delta_theta -
+                         m1_plus_m2 * gravity_sin_theta_2) / den2
+
+
+
+        # Calculate positions
+        x1 = LENGTH1 * SCALE * np.sin(theta_1_radians) + OFFSET_X
+        y1 = -LENGTH1 * SCALE * np.cos(theta_1_radians) + OFFSET_Y
+        x2 = x1 + LENGTH2 * SCALE * np.sin(theta_2_radians)
+        y2 = y1 - LENGTH2 * SCALE * np.cos(theta_2_radians)
+
+        # Just update the entire screen rather than each pendulum
+        screen.fill((0, 0, 0))
+        for i in range(1000):
+            # Get interpolated color from the colormap
+            pendulum_color = cmap(i)[:3]  # Drop the alpha value
+            pendulum_color = [int(c * 255) for c in pendulum_color]  # Convert to RGB format
+            pygame.draw.line(screen, pendulum_color, (OFFSET_X, OFFSET_Y), (x1[i], y1[i]), 1)
+            pygame.draw.line(screen, pendulum_color, (x1[i], y1[i]), (x2[i], y2[i]), 1)
+        pygame.display.flip()
+    clock.tick(60)
+
 pygame.quit()
