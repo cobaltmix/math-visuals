@@ -21,7 +21,7 @@ def calculate_end_point(start_x, start_y, angle, length):
 
 # Function to compute the complex rotation speeds based on the function z(theta)
 def z(theta):
-    return cmath.exp(math.cos(theta) *2j) + cmath.exp(math.pi ** math.sin(theta) * 2j)
+    return cmath.exp(math.tanh(math.sinh(theta)) * 1j) + cmath.exp(math.pi ** math.sinh(math.tanh(theta)) * 2j)
 
 # Fixed line lengths
 length_line1 = 300

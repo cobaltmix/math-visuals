@@ -20,7 +20,7 @@ OFFSET_X, OFFSET_Y = WIDTH // 2, HEIGHT // 2
 # Physics constants
 LENGTH1, LENGTH2 = 2, 2
 MASS1, MASS2 = 2, 2
-GRAVITY = -300
+GRAVITY = -100
 SCALE = 100
 
 # Initialize Pygame
@@ -35,7 +35,7 @@ is_running_simulation = True
 colors = [(255, 0, 0), (0, 255, 255),(0, 255, 0), (0, 0, 255), (255, 165, 0)]
 
 # Pre-calculate cos and sin for theta_1 and theta_2
-theta_1_radians = np.linspace(0.1, 0.1 + 0.000001 * 999, 1000)
+theta_1_radians = np.linspace(0.1, 0.1 + 0.000001 * 9999, 10000)
 theta_2_radians = theta_1_radians.copy()  # They start the same
 cos_theta_1 = np.cos(theta_1_radians)
 sin_theta_1 = np.sin(theta_1_radians)
@@ -43,8 +43,8 @@ cos_theta_2 = np.cos(theta_2_radians)
 sin_theta_2 = np.sin(theta_2_radians)
 
 # Omega (angular velocity) initialization
-omega_1 = np.zeros(1000)
-omega_2 = np.zeros(1000)
+omega_1 = np.zeros(10000)
+omega_2 = np.zeros(10000)
 
 # Pre-calculate constant expressions and denominators
 m1_plus_m2 = MASS1 + MASS2
@@ -134,13 +134,13 @@ while running:
 
         # Just update the entire screen rather than each pendulum
         screen.fill((0, 0, 0))
-        for i in range(1000):
+        for i in range(10000):
             # Get interpolated color from the colormap
             pendulum_color = cmap(i)[:3]  # Drop the alpha value
             pendulum_color = [int(c * 255) for c in pendulum_color]  # Convert to RGB format
             pygame.draw.line(screen, pendulum_color, (OFFSET_X, OFFSET_Y), (x1[i], y1[i]), 1)
             pygame.draw.line(screen, pendulum_color, (x1[i], y1[i]), (x2[i], y2[i]), 1)
         pygame.display.flip()
-    clock.tick(60)
+    clock.tick(600000000)
 
 pygame.quit()
