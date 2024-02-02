@@ -12,7 +12,7 @@ font = pygame.font.SysFont("Arial", 80)  # Create a Font object
 WIDTH, HEIGHT = 2000, 1200
 CENTER = (WIDTH // 2, HEIGHT // 2)
 LARGE_CIRCLE_RADIUS = HEIGHT // 2.2
-GRAVITY = 0
+GRAVITY = 0.001
 FRICTION = 1
 MIN_SPLIT_SPEED = 40
 BALL_SPLIT_COOLDOWN = 1000  # Number of frames to wait before ball can split again
@@ -85,13 +85,8 @@ class Ball:
             self.position[0] - CENTER[0], self.position[1] - CENTER[1]
         )
 
-
         if distance_from_center + self.radius > LARGE_CIRCLE_RADIUS:
-
-
-
             collision_occurred = True
-            self.cooldown = BALL_SPLIT_COOLDOWN  # Activate cooldown to prevent immediate re-splitting
 
             # Calculate normal of collision
             collision_normal = (
@@ -106,9 +101,7 @@ class Ball:
 
             # Rotate the collision normal by a small angle to increase the bounce angle
             # Determine rotation direction (clockwise or counter-clockwise) based on velocity
-            rotation_angle = (
-                math.pi / 12
-            )  # Adjust this angle to change the bounce strength
+            rotation_angle = math.pi / 12
             rotation_direction = -math.copysign(
                 1,
                 self.velocity[0] * collision_normal[1]
@@ -130,15 +123,17 @@ class Ball:
             # Move the ball to the edge of the large circle if it's overlapping
             overlap = distance_from_center + self.radius - LARGE_CIRCLE_RADIUS
             self.position = [
-                p - overlap * n for p, n in zip(self.position, modified_normal)
+                p - overlap * n for p, n in zip(self.position, collision_normal)
             ]
 
             # Play sound if provided
             if self.sound:
-                # Try to play the sound on any available channel
                 channel = pygame.mixer.find_channel()
                 if channel:
                     channel.play(self.sound)
+
+            # Remove this condition to allow immediate splitting
+            # self.cooldown = BALL_SPLIT_COOLDOWN
 
         return collision_occurred
 
@@ -146,7 +141,9 @@ class Ball:
 def run_simulation(GRAVITY):
     running = True
     # Start with a single ball with an upward velocity to ensure it will hit the circle's border
-    balls = [Ball(10, RAINBOW_COLORS[0], (CENTER[0], CENTER[1] + 50), (3, -4))]
+    initial_radius = 400
+    initial_color_index = 0
+    balls = [Ball(initial_radius, RAINBOW_COLORS[initial_color_index], (CENTER[0], CENTER[1] + initial_radius + 10), (0, 0), 0, collision_sound)]
     color_index = 1
 
     while running:
@@ -155,53 +152,41 @@ def run_simulation(GRAVITY):
                 running = False
 
         # Array to accumulate the new set of balls for the next frame
-        new_balls = []
 
+        new_balls = []
 
         for ball in balls:
             ball.move(GRAVITY)
-            if ball.cooldown > 0:
-                ball.cooldown -= 1
-
             collision_occurred = ball.bounce(GRAVITY)
 
+            # Split (and create new balls) upon collision, if not already too small
+            if collision_occurred and ball.radius > 1:
+                new_radius = ball.radius // 1.8  # Half the radius for the two new balls
 
-            if (
-                collision_occurred
-                and ball.cooldown == BALL_SPLIT_COOLDOWN
-                and len(balls) <= MAX_BALLS
-            ):
-                GRAVITY += 0.001
-                color = RAINBOW_COLORS[color_index % len(RAINBOW_COLORS)]
-                color_index += 1
-
-                velocity_magnitude = math.hypot(*ball.velocity)
-                velocity_angle = math.atan2(ball.velocity[1], ball.velocity[0])
-
-                # Split the ball at slightly different angles
-                angle_offset = math.pi / 90  # Offset by 15 degrees
+                # We create two new balls with the new radius and the split velocities
+                angle_offset = math.pi / 90  # Offset by 2 degrees
                 for offset in (-angle_offset, angle_offset):
-                    new_angle = velocity_angle + offset
+                    new_angle = math.atan2(ball.velocity[1], ball.velocity[0]) + offset
                     new_velocity = (
-                        velocity_magnitude * math.cos(new_angle),
-                        velocity_magnitude * math.sin(new_angle),
+                        math.cos(new_angle) * MIN_SPLIT_SPEED / 2,  # Reduced speed for smaller ball
+                        math.sin(new_angle) * MIN_SPLIT_SPEED / 2,
                     )
-                    new_balls.append(
-                        Ball(
-                            ball.radius,
-                            color,
-                            ball.position,
-                            new_velocity,
-                            BALL_SPLIT_COOLDOWN,
-                            collision_sound,
-                        )
+                    new_ball = Ball(
+                        new_radius,
+                        RAINBOW_COLORS[(initial_color_index + 1) % len(RAINBOW_COLORS)],
+                        ball.position,
+                        new_velocity,
+                        BALL_SPLIT_COOLDOWN,  # Add cooldown for no immediate re-splitting
+                        collision_sound,  # Ball retains a reference to the sound it should play
                     )
+                    new_balls.append(new_ball)
+                    initial_color_index += 1  # Cycle through rainbow colors for each split
 
-            elif ball.cooldown < BALL_SPLIT_COOLDOWN:
+            # If the ball is too small or didn't collide, just append it back
+            else:
                 new_balls.append(ball)
 
-        balls = new_balls  # Replace the current list of balls with the updated list
-
+        balls = new_balls
 
 
         screen.fill((255, 255, 255))  # White background
