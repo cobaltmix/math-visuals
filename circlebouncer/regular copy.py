@@ -27,73 +27,144 @@ pygame.mixer.set_num_channels(128)
 
 channels = [pygame.mixer.Channel(i) for i in range(128)]
 
+# # Load sound files for the notes
+# note_files = [
+#     "E5.wav",
+#     "D#5.wav",
+#     "E5.wav",
+#     "D#5.wav",
+#     "E5.wav",
+#     "B4.wav",
+#     "D5.wav",
+#     "C5.wav",
+#     "A4.wav",
+#     "C4.wav",
+#     "E4.wav",
+#     "A4.wav",
+#     "B4.wav",
+#     "E4.wav",
+#     "G#4.wav",
+#     "B4.wav",
+#     "C5.wav",
+#     "E4.wav",
+#     "E5.wav",
+#     "D#5.wav",
+#     "E5.wav",
+#     "D#5.wav",
+#     "E5.wav",
+#     "B4.wav",
+#     "D5.wav",
+#     "C5.wav",
+#     "A4.wav",
+#     "C4.wav",
+#     "E4.wav",
+#     "A4.wav",
+#     "B4.wav",
+#     "D4.wav",
+#     "C5.wav",
+#     "B4.wav",
+#     "A4.wav",
+#     "B4.wav",
+#     "C5.wav",
+#     "D5.wav",
+#     "E5.wav",
+#     "G4.wav",
+#     "F5.wav",
+#     "E5.wav",
+#     "D5.wav",
+#     "F4.wav",
+#     "E5.wav",
+#     "D5.wav",
+#     "C5.wav",
+#     "E4.wav",
+#     "D5.wav",
+#     "C5.wav",
+#     "B4.wav",
+#     "E4.wav",
+#     "E4.wav",
+#     "E5.wav",
+#     "E5.wav",
+#     "E5.wav",
+#     "D#5.wav",
+#     "E5.wav",
+#     "D#5.wav",
+#     "E5.wav",
+#     "B4.wav",
+#     "D5.wav",
+#     "C5.wav",
+#     "A4.wav",
+# ]
 # Load sound files for the notes
 note_files = [
-    "E5.wav",
-    "D#5.wav",
-    "E5.wav",
-    "D#5.wav",
-    "E5.wav",
-    "B4.wav",
+    "F5.wav",
     "D5.wav",
-    "C5.wav",
     "A4.wav",
-    "C4.wav",
-    "E4.wav",
-    "A4.wav",
-    "B4.wav",
-    "E4.wav",
-    "G#4.wav",
-    "B4.wav",
-    "C5.wav",
-    "E4.wav",
-    "E5.wav",
-    "D#5.wav",
-    "E5.wav",
-    "D#5.wav",
-    "E5.wav",
-    "B4.wav",
     "D5.wav",
+        "F5.wav",
+    "D5.wav",
+    "A4.wav",
+    "D5.wav",
+        "F5.wav",
     "C5.wav",
     "A4.wav",
-    "C4.wav",
-    "E4.wav",
-    "A4.wav",
-    "B4.wav",
-    "D4.wav",
     "C5.wav",
-    "B4.wav",
+    "F5.wav",
+        "C5.wav",
     "A4.wav",
-    "B4.wav",
     "C5.wav",
+        "E5.wav",
+    "C#5.wav",
+    "A4.wav",
+    "C#5.wav",
+        "E5.wav",
+        "C#5.wav",
+    "A4.wav",
+    "C#5.wav",
+        "E5.wav",
+        "C#5.wav",
+    "A4.wav",
+    "C#5.wav",
+        "E5.wav",
+
+    "A5.wav",
     "D5.wav",
     "E5.wav",
-    "G4.wav",
+    "F5.wav",
+    "A5.wav",
+    "G5.wav",
+    "A5.wav",
+    "C5.wav",
+    "D5.wav",
+        "E5.wav",
     "F5.wav",
     "E5.wav",
-    "D5.wav",
-    "F4.wav",
-    "E5.wav",
-    "D5.wav",
-    "C5.wav",
-    "E4.wav",
-    "D5.wav",
-    "C5.wav",
-    "B4.wav",
-    "E4.wav",
-    "E4.wav",
-    "E5.wav",
-    "E5.wav",
-    "E5.wav",
-    "D#5.wav",
-    "E5.wav",
-    "D#5.wav",
-    "E5.wav",
-    "B4.wav",
-    "D5.wav",
-    "C5.wav",
-    "A4.wav",
+    "G5.wav",
+    "A5.wav",
+    "G5.wav",
+    "F5.wav",
+    "F5.wav",
+    "F5.wav",
+    "F5.wav",
+    "A5.wav",
+    "A5.wav",
+    "G5.wav",
+    "F5.wav",
+    "A5.wav",
+    "A5.wav",
+    "A5.wav",
+    "G5.wav",
+    "A5.wav",
+    "G5.wav",
+    "F5.wav",
+    "F5.wav",
+    "F5.wav",
+    "F5.wav",
+        "A5.wav",
+    "A5.wav",
+    "G5.wav",
+    "F5.wav",
 ]
+
 
 # note_files = [
 #     "D1.wav", "D#1.wav",
@@ -159,7 +230,7 @@ def interpolate_color(color1, color2, t):
 # Circle settings
 big_circle_center = (screen_width // 2, screen_height // 2)
 big_circle_radius = 550
-small_circle_radius = 20
+small_circle_radius = 50
 small_circle_center = (
     big_circle_center[0],
     big_circle_center[1] - big_circle_radius + small_circle_radius,
@@ -167,10 +238,10 @@ small_circle_center = (
 
 # Small circle movement and trail settings
 velocity = [10, 0]  # Reduced initial velocity for slower movement
-gravity = 0.6 # Reduced gravity for slower acceleration
+gravity = 0.6  # Reduced gravity for slower acceleration
 
 
-color_index, t, color_change_speed = 0, 0, 0.01
+color_index, t, color_change_speed = 0, 0, 0.03
 # Clock for controlling frame rate
 
 clock = pygame.time.Clock()
@@ -217,7 +288,7 @@ while running:  # Handle events
             for c1, c2 in zip(small_circle_center, big_circle_center)
         ]
         dot_product = sum(velocity[i] * n for i, n in enumerate((nx, ny)))
-        velocity = [v -  2*dot_product * n for v, n in zip(velocity, (nx, ny))]
+        velocity = [v - 2 * dot_product * n for v, n in zip(velocity, (nx, ny))]
 
         while distance + small_circle_radius + 5 >= big_circle_radius:
             small_circle_center = (
@@ -228,13 +299,14 @@ while running:  # Handle events
                 *(c1 - c2 for c1, c2 in zip(small_circle_center, big_circle_center))
             )
 
-
     if small_circle_radius + 10 >= big_circle_radius:
         small_circle_center = (screen_width / 2, screen_height / 2)
     trail_radius = int(small_circle_radius) + 1
 
     # Add the current small circle position and radius to the trail deque
-    previous_circle_positions.appendleft((small_circle_center, small_circle_radius, BALL_COLOR))
+    previous_circle_positions.appendleft(
+        (small_circle_center, small_circle_radius, BALL_COLOR)
+    )
 
     # Render
     screen.fill(BLACK)
@@ -258,8 +330,8 @@ while running:  # Handle events
         # Remove clipping to draw other elements
     screen.set_clip(None)
 
-
     # Render the current small circle position
+    pygame.draw.circle(screen, BLACK, small_circle_center, small_circle_radius+5)
     pygame.draw.circle(screen, BALL_COLOR, small_circle_center, small_circle_radius)
 
     pygame.display.flip()

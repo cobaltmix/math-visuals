@@ -6,7 +6,7 @@ import random
 
 # Initialize Pygame
 pygame.init()
-x,y = 0,0
+x, y = 0, 0
 
 # Set up display
 screen_width, screen_height = 1500, 1300
@@ -27,57 +27,74 @@ pygame.mixer.set_num_channels(64)
 
 channels = [pygame.mixer.Channel(i) for i in range(64)]
 
-# Load sound files for the notes
 note_files = [
-    "D1.wav",
-    "E1.wav",
-    "F1.wav",
-    "G1.wav",
-    "A1.wav",
-    "B1.wav",
-    "C2.wav",
-    "D2.wav",
-    "E2.wav",
-    "F2.wav",
-    "G2.wav",
-    "A2.wav",
-    "B2.wav",
-    "C3.wav",
-    "D3.wav",
-    "E3.wav",
-    "F3.wav",
-    "G3.wav",
-    "A3.wav",
-    "B3.wav",
-    "C4.wav",
-    "D4.wav",
-    "E4.wav",
-    "F4.wav",
-    "G4.wav",
+    "F5.wav",
+    "D5.wav",
     "A4.wav",
-    "B4.wav",
+    "D5.wav",
+        "F5.wav",
+    "D5.wav",
+    "A4.wav",
+    "D5.wav",
+        "F5.wav",
     "C5.wav",
+    "A4.wav",
+    "C5.wav",
+    "F5.wav",
+        "C5.wav",
+    "A4.wav",
+    "C5.wav",
+        "E5.wav",
+    "C#5.wav",
+    "A4.wav",
+    "C#5.wav",
+        "E5.wav",
+        "C#5.wav",
+    "A4.wav",
+    "C#5.wav",
+        "E5.wav",
+        "C#5.wav",
+    "A4.wav",
+    "C#5.wav",
+        "E5.wav",
+
+    "A5.wav",
     "D5.wav",
     "E5.wav",
     "F5.wav",
+    "A5.wav",
     "G5.wav",
     "A5.wav",
-    "B5.wav",
-    "C6.wav",
-    "D6.wav",
-    "E6.wav",
-    "F6.wav",
-    "G6.wav",
-    "A6.wav",
-    "B6.wav",
-    "C7.wav",
-    "D7.wav",
-    "E7.wav",
-    "F7.wav",
-    "G7.wav",
-    "A7.wav",
-    "B7.wav",
-
+    "C5.wav",
+    "D5.wav",
+        "E5.wav",
+    "F5.wav",
+    "E5.wav",
+    "G5.wav",
+    "A5.wav",
+    "G5.wav",
+    "F5.wav",
+    "F5.wav",
+    "F5.wav",
+    "F5.wav",
+    "A5.wav",
+    "A5.wav",
+    "G5.wav",
+    "F5.wav",
+    "A5.wav",
+    "A5.wav",
+    "A5.wav",
+    "G5.wav",
+    "A5.wav",
+    "G5.wav",
+    "F5.wav",
+    "F5.wav",
+    "F5.wav",
+    "F5.wav",
+        "A5.wav",
+    "A5.wav",
+    "G5.wav",
+    "F5.wav",
 ]
 notes = [pygame.mixer.Sound(note_file) for note_file in note_files]
 
@@ -88,6 +105,7 @@ current_note = 0
 # Function to interpolate between colors
 def interpolate_color(color1, color2, t):
     return tuple(color1[i] + (color2[i] - color1[i]) * t for i in range(3))
+
 
 # Circle settings
 big_circle_center = (screen_width // 2, screen_height // 2)
@@ -103,7 +121,8 @@ velocity = [5, 0.2]  # Reduced initial velocity for slower movement
 gravity = 0.4  # Reduced gravity for slower acceleration
 
 
-color_index, t, color_change_speed = 0, 0, 0.01
+color_index, t, color_change_speed = 0, 0, 0.015
+
 # Clock for controlling frame rate
 
 clock = pygame.time.Clock()
@@ -111,13 +130,12 @@ clock = pygame.time.Clock()
 
 running = True
 
-while running: # Handle events
+while running:  # Handle events
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-
 
     velocity[1] += gravity
     small_circle_center = (
@@ -134,8 +152,6 @@ while running: # Handle events
     BALL_COLOR = interpolate_color(
         colors[color_index], colors[(color_index + 1) % len(colors)], t
     )
-
-
 
     # Bounce small circle and adjust radius
     if distance + small_circle_radius >= big_circle_radius:
@@ -164,21 +180,16 @@ while running: # Handle events
             distance = math.hypot(
                 *(c1 - c2 for c1, c2 in zip(small_circle_center, big_circle_center))
             )
-        small_circle_radius += 2
-        big_circle_radius += 2
+
+        small_circle_radius *= 1.05
 
     if small_circle_radius >= big_circle_radius:
-        small_circle_center = (
-            screen_width/2, screen_height/2
-        )
-    big_circle_radius -= 0.4
+        small_circle_center = (screen_width / 2, screen_height / 2)
 
     # Render
     screen.fill(BLACK)
 
-    pygame.draw.circle(
-        screen, BALL_COLOR, big_circle_center, big_circle_radius + 5
-    )
+    pygame.draw.circle(screen, BALL_COLOR, big_circle_center, big_circle_radius + 5)
     pygame.draw.circle(screen, BLACK, big_circle_center, big_circle_radius)
     pygame.draw.circle(
         screen, (255, 255, 255), small_circle_center, small_circle_radius + 1
